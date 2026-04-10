@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Almirah - Object Detection System</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #1a1a2e; color: #eee; padding: 20px; }
+        h1 { text-align: center; margin-bottom: 5px; color: #e94560; }
+        .subtitle { text-align: center; color: #888; margin-bottom: 20px; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-bottom: 20px; }
+        .stat { background: #16213e; border-radius: 10px; padding: 18px; text-align: center; border: 1px solid #0f3460; }
+        .stat .val { font-size: 2em; font-weight: bold; color: #e94560; }
+        .stat .lbl { color: #888; font-size: 0.85em; margin-top: 4px; }
+        .controls { display: flex; gap: 10px; margin-bottom: 20px; justify-content: center; flex-wrap: wrap; }
+        button { padding: 10px 22px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; transition: all 0.2s; }
+        button:hover { transform: translateY(-1px); }
+        .btn-detect { background: #e94560; color: white; }
+        .btn-camera { background: #0f3460; color: white; }
+        .btn-clear { background: #533483; color: white; }
+        .panel { background: #16213e; border-radius: 10px; padding: 20px; margin-bottom: 20px; border: 1px solid #0f3460; }
+        .panel h2 { color: #e94560; margin-bottom: 12px; font-size: 1.1em; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 8px 12px; text-align: left; border-bottom: 1px solid #0f3460; }
+        th { color: #888; }
+        .color-dot { display: inline-block; width: 12px; height: 12px; border-radius: 50%; margin-right: 6px; vertical-align: middle; }
+        .detection-feed { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; }
+        .det-card { background: #1a1a2e; border-radius: 8px; padding: 12px; border: 1px solid #0f3460; }
+        .det-card .category { font-weight: bold; font-size: 1.1em; text-transform: capitalize; }
+        .det-card .conf { color: #e94560; font-weight: 600; }
+        .camera-indicator { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 6px; }
+        .cam-on { background: #22c55e; box-shadow: 0 0 6px #22c55e; }
+        .cam-off { background: #666; }
+    </style>
+</head>
+<body>
+    <h1>Smart Almirah</h1>
+    <p class="subtitle">AI-Powered Wardrobe Object Detection System (YOLOv8)</p>
+
+    <div class="grid">
+        <div class="stat"><div class="val" id="total-items">0</div><div class="lbl">Unique Items</div></div>
+        <div class="stat"><div class="val" id="total-count">0</div><div class="lbl">Total Count</div></div>
+        <div class="stat"><div class="val" id="avg-conf">0%</div><div class="lbl">Avg Confidence</div></div>
+        <div class="stat"><div class="val" id="avg-inference">0ms</div><div class="lbl">Avg Inference</div></div>
+        <div class="stat"><div class="val" id="camera-status"><span class="camera-indicator cam-off"></span>OFF</div><div class="lbl">Camera</div></div>
+    </div>
+
+    <div class="controls">
+        <button class="btn-detect" onclick="runDetection()">Run Detection</button>
+        <button class="btn-detect" onclick="runMultiple(5)">Run 5x Detection</button>
+        <button class="btn-camera" onclick="toggleCamera()">Toggle Camera</button>
+        <button class="btn-clear" onclick="location.reload()">Refresh</button>
+    </div>
+
+    <div class="panel">
+        <h2>Latest Detections</h2>
+        <div class="detection-feed" id="detections"></div>
+    </div>
+
+    <div class="panel">
+        <h2>Inventory</h2>
+        <table>
+            <thead><tr><th>Item</th><th>Color</th><th>Count</th><th>Confidence</th><th>Last Seen</th></tr></thead>
+            <tbody id="inventory-table"></tbody>
+        </table>
+    </div>
+
+    <script>
+        const colorMap = {red:'#ef4444',blue:'#3b82f6',black:'#333',white:'#f0f0f0',green:'#22c55e',navy:'#1e3a5f',gray:'#9ca3af',beige:'#d4a574',brown:'#8b4513',pink:'#ec4899',yellow:'#eab308',purple:'#a855f7'};
+        let cameraOn = false;
+
+        async function runDetection() {
+            const res = await fetch('/api/detect', {method: 'POST'});
+            const data = await res.json();
+            const div = document.getElementById('detections');
+            div.innerHTML = '';
+            for (const d of data.detections) {
+                div.innerHTML += `<div class="det-card">
+                    <div class="category"><span class="color-dot" style="background:${colorMap[d.color]||'#888'}"></span>${d.color} ${d.category}</div>
+                    <div class="conf">${(d.confidence*100).toFixed(1)}% confidence</div>
+                    <div style="color:#888;font-size:0.85em">${d.inference_time_ms}ms inference</div>
+                </div>`;
+            }
+            refreshStats();
+            refreshInventory();
+        }
+
+        async function runMultiple(n) {
+            for (let i = 0; i < n; i++) {
+                await runDetection();
+                await new Promise(r => setTimeout(r, 200));
+            }
+        }
+
+        async function refreshStats() {
+            try {
+                const res = await fetch('/api/stats');
+                const data = await res.json();
+                if (data.message) return;
+                document.getElementById('total-items').textContent = data.unique_items;
+                document.getElementById('total-count').textContent = data.total_detections;
+                document.getElementById('avg-conf').textContent = (data.average_confidence * 100).toFixed(1) + '%';
+                document.getElementById('avg-inference').textContent = data.average_inference_ms + 'ms';
+            } catch(e) {}
+        }
+
+        async function refreshInventory() {
+            try {
+                const res = await fetch('/api/inventory');
+                const data = await res.json();
+                const tbody = document.getElementById('inventory-table');
+                tbody.innerHTML = '';
+                for (const item of data.items.sort((a,b) => b.count - a.count)) {
+                    tbody.innerHTML += `<tr>
+                        <td style="text-transform:capitalize">${item.category}</td>
+                        <td><span class="color-dot" style="background:${colorMap[item.color]||'#888'}"></span>${item.color}</td>
+                        <td>${item.count}</td>
+                        <td>${(item.confidence*100).toFixed(1)}%</td>
+                        <td style="color:#888;font-size:0.85em">${new Date(item.last_seen).toLocaleTimeString()}</td>
+                    </tr>`;
+                }
+            } catch(e) {}
+        }
+
+        async function toggleCamera() {
+            cameraOn = !cameraOn;
+            await fetch(cameraOn ? '/api/camera/start' : '/api/camera/stop', {method: 'POST'});
+            const el = document.getElementById('camera-status');
+            el.innerHTML = cameraOn
+                ? '<span class="camera-indicator cam-on"></span>ON'
+                : '<span class="camera-indicator cam-off"></span>OFF';
+        }
+
+        refreshStats();
+        refreshInventory();
+    </script>
+</body>
+</html>
