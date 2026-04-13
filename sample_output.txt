@@ -1,0 +1,60 @@
+Smart Almirah — Sample Detection Output
+========================================
+
+Request:
+  POST /api/detect
+  (triggered on camera frame)
+
+Response:
+{
+  "detections": [
+    {
+      "item_id": "a3f2b1c4",
+      "category": "jacket",
+      "color": "navy",
+      "confidence": 0.91,
+      "bounding_box": { "x": 120, "y": 85, "width": 180, "height": 260 },
+      "inference_time_ms": 67.4,
+      "detected_at": "2024-11-14T10:23:41"
+    },
+    {
+      "item_id": "d7e8f902",
+      "category": "jeans",
+      "color": "blue",
+      "confidence": 0.87,
+      "bounding_box": { "x": 310, "y": 190, "width": 140, "height": 310 },
+      "inference_time_ms": 68.1,
+      "detected_at": "2024-11-14T10:23:41"
+    },
+    {
+      "item_id": "c5a9d301",
+      "category": "t-shirt",
+      "color": "white",
+      "confidence": 0.83,
+      "bounding_box": { "x": 200, "y": 130, "width": 160, "height": 210 },
+      "inference_time_ms": 69.2,
+      "detected_at": "2024-11-14T10:23:41"
+    }
+  ],
+  "count": 3,
+  "inference_time_ms": 68.7,
+  "model": "yolov8n"
+}
+
+Detected Items:
+  - jacket (navy)
+  - jeans (blue)
+  - t-shirt (white)
+
+Inventory Updated:
+  navy_jacket  → count: 1
+  blue_jeans   → count: 1
+  white_t-shirt → count: 1
+
+GET /api/inventory/summary
+{
+  "total_unique_items": 3,
+  "total_count": 3,
+  "by_category": { "jacket": 1, "jeans": 1, "t-shirt": 1 },
+  "by_color":    { "navy": 1, "blue": 1, "white": 1 }
+}
