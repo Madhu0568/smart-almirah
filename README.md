@@ -1,5 +1,7 @@
 # AI-Enabled Smart Almirah — Object Detection System
 
+> This project demonstrates backend system design concepts including APIs, data processing, and asynchronous workflows.
+
 The idea came from a real problem: I can never find clothes quickly in the morning. I wanted to build something that automatically knows what's in a wardrobe without manually cataloging it.
 
 The system uses YOLOv8 to detect and identify clothing items from a camera feed in real time, updates an inventory automatically on each detection event, and exposes a REST API so the wardrobe contents can be queried instantly.
