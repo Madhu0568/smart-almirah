@@ -1,14 +1,14 @@
-# AI-Enabled Smart Almirah — Object Detection System
+# AI-Enabled Smart Almirah — Object Detection System (YOLOv8)
 
 > This project demonstrates backend system design concepts including APIs, data processing, and asynchronous workflows.
 
-The idea came from a real problem: I can never find clothes quickly in the morning. I wanted to build something that automatically knows what's in a wardrobe without manually cataloging it.
+## Overview
 
-The system uses YOLOv8 to detect and identify clothing items from a camera feed in real time, updates an inventory automatically on each detection event, and exposes a REST API so the wardrobe contents can be queried instantly.
+Developed an object detection system using YOLOv8 to identify clothing items from images and a camera feed. Built a REST API for uploading images and retrieving detected items. Integrated OpenCV for image processing and real-time inference. Inventory is updated automatically on each detection event.
 
-The main technical challenge was inference speed — the initial pipeline ran at ~120ms per frame which wasn't fast enough for real-time use. I got it down to ~68ms through frame batching and model quantization (a 43% reduction).
+The main technical challenge was inference speed — the initial pipeline ran at ~120ms per frame. Got it down to ~68ms through frame batching and model quantization (a 43% reduction).
 
-## What it does
+## Features
 
 - **Real-time object detection** using YOLOv8 pretrained model on clothing items (shirts, jeans, jackets, dresses, etc.)
 - **Confidence filtering** — only items detected above a configurable threshold (default 0.65) are recorded
@@ -22,7 +22,7 @@ The main technical challenge was inference speed — the initial pipeline ran at
 
 Python · YOLOv8 · OpenCV · Flask · REST API
 
-## Setup
+## How to Run
 
 ```bash
 pip install -r requirements.txt
@@ -109,3 +109,7 @@ Inventory API ──→ Item records (category, color, count, timestamps)
     │
 Flask Control Server ──→ camera start/stop, trigger detection, serve API
 ```
+
+## Output
+
+See [sample_output.txt](sample_output.txt) for real API request/response examples including detection results with bounding boxes, confidence scores, inventory updates, and performance stats.
